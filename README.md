@@ -1,6 +1,6 @@
 # 455-k-wordle
-
-Evolutionary Algorithm Design: Word Optimization
+**
+Evolutionary Algorithm Design: Word Optimization**
 
 This project implements an Evolutionary Algorithm (EA) designed to "evolve" a target word through stochastic optimization, mimicking the process of natural selection.
 1. Representation
@@ -17,6 +17,7 @@ should also be encorporated.
 3. Variation Operators
 
 We employ a mix of mutation and recombination to maintain genetic diversity while converging on a solution.
+
 Mutation
 
     Creep Mutation: Small incremental changes to the integer values to explore neighboring letters.
