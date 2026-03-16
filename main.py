@@ -1,4 +1,4 @@
-
+import random
 
 
 
@@ -31,6 +31,45 @@ def generational_selection(population, offspring, k):
 
 
 
+
+def uniform_crossover(parent1, parent2):
+    """
+    Performs uniform crossover on two parents to create two offspring
+
+    Args:
+        parent1 (list): A single individual representing a word
+        parent2 (list): A single individual representing a word
+
+    Returns:
+        offspring (list): A list of two individuals that represent the offspring
+    """
+
+    offspring1 = []
+    offspring2 = []
+
+
+    #TODO: How do we decide the length of the offspring? Are they both the same?
+    #      Do we want them to match the parent length?
+
+    #Right now the length of the offspring = the length of the smallest parent
+
+    offspring_size = min(len(parent1), len(parent2))
+
+    for i in range(offspring_size):
+
+        #With probability 0.5 take from parent 1 or parent 2, other child gets the other one
+        if random.random() < 0.5:
+            offspring1.append(parent1[i])
+            offspring2.append(parent2[i])
+        else:
+            offspring1.append(parent2[i])
+            offspring2.append(parent1[i])
+
+    return [offspring1, offspring2]
+
+
+
+print(uniform_crossover([1, 2, 3, 4], [5, 5, 5, 5, 5, 5]))
 
 
 
