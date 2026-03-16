@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 
 
@@ -108,5 +109,52 @@ def n_point_crossover(parent1, parent2, n):
     return [offspring1, offspring2]
 
 
+
+def mutate(individual, mutation_rate=0.2):
+    """
+    Performs mutation on an individual by mutating each gene with a mutation_rate% chance. 
+    If the letter is a Green Letter we don't mutate, if Yelllow we swap mutate, if the letter
+    is gray we random reset
+
+    Args:
+        individual (list): A single individual representing a word
+        mutation_rate (float): A float between 0 and 1 determning chance of a gene being
+        mutated
+
+    Returns:
+        individual (list): the new mutated individual
+    """
+
+    real_answer = ['c', 'h', 'e', 'a', 't']
+
+    #Determines what kind of letter it is
+    for c_index in range(len(individual)):
+        if c_index <= len(real_answer): # ensures index never hits out of bounds
+
+            #Mutation_rate % of the time we mutate an individual gene
+            if random.random() < mutation_rate:
+
+                #Skip Green Letters
+                if individual[c_index] == real_answer[c_index]:
+                    print("Green Letter, Nothing")
+                    continue
+
+                #Swap mutation the yellows
+                elif individual[c_index] in real_answer: # BE ADVISED - YELLOWS MAY BE TAGGED INCORRECTLY DUE TO DUPLICATES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    print("Yellow Letter, Swap Mutation")
+                        # Assume 'arr' is your genome and 'i' is your current_index
+                    random_idx = random.randrange(len(individual))
+
+                    # Swap this element with a random one in the arr
+                    individual[c_index], individual[random_idx] = individual[random_idx], individual[c_index]
+                
+                #Do random resetting
+                else:
+                    print("Gray Letter, Random Reset Mutation")
+                    new_letter = np.random.randint(1,26)
+
+                    individual[c_index] = new_letter
+    print(individual)
+    return individual
 
 
