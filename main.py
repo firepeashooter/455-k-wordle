@@ -68,8 +68,44 @@ def uniform_crossover(parent1, parent2):
     return [offspring1, offspring2]
 
 
+#TODO: Make sure to test this (and all of these more)
+def n_point_crossover(parent1, parent2, n):
+    """
+    Performs n-point crossover on two integer arrays.
+    """
 
-print(uniform_crossover([1, 2, 3, 4], [5, 5, 5, 5, 5, 5]))
+    min_len = min(len(parent1), len(parent2))
+    #If the shorter parent is too small for n points,we cap n to avoid an error.
+    n = min(n, min_len - 1)
+    
+    #Pick and sort n random split points
+    points = sorted(random.sample(range(1, min_len), n))
+    #Add the start and end indices to make looping easier just like that example in class
+    points = [0] + points + [min_len]
+    
+    offspring1 = []
+    offspring2 = []
+    
+    #Alternate segments
+    for i in range(len(points) - 1):
+        start = points[i]
+        end = points[i+1]
+        
+        #Every other segment, we swap which parent goes to which child
+        if i % 2 == 0:
+            offspring1.extend(parent1[start:end])
+            offspring2.extend(parent2[start:end])
+        else:
+            offspring1.extend(parent2[start:end])
+            offspring2.extend(parent1[start:end])
+            
+    #Make it so that the child 1 is as long as child 2 and vice versa
+    if len(parent1) > len(parent2):
+        offspring1.extend(parent1[min_len:])
+    elif len(parent2) > len(parent1):
+        offspring2.extend(parent2[min_len:])
+        
+    return [offspring1, offspring2]
 
 
 
