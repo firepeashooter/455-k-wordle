@@ -2,6 +2,9 @@ import numpy as np
 import answer # generates an answer
 import copy
 import random
+import nltk
+nltk.download('words')
+from nltk.corpus import words
 
 
 # TODO
@@ -192,7 +195,63 @@ def n_point_crossover(parent1, parent2, n):
         
     return [offspring1, offspring2]
 
+def create_individual():
+    """
+    Creates a random individual for the population
 
+    Returns:
+        individual - A list of characters representing a guess
+    """
+    global ANSWER
+    word_length = len(ANSWER)
+    full_word_list = words.words('en') 
+
+    final_list = []
+    for w in full_word_list:
+        if len(w) == word_length:
+            final_list.append(w)
+
+    random_word = final_list[np.random.randint(0,len(final_list)-1)].lower()
+
+    return [char for char in random_word]
+  
+
+def initialize_population(pop_size=100):
+    """
+    Initializes a population of random guesses
+
+    Args:
+        pop_size - The number of individuals in the population
+
+    Returns:
+        population - A list of individuals representing the population
+    """
+    population = []
+    for i in range(pop_size):
+        new_individual = create_individual()
+        population.append(new_individual)
+    
+    return population
+
+def to_phenotype(individual):
+    """
+    Converts a list of characters into a string 
+
+    Args:
+        individual - a list of characters representing a guess
+
+    Returns:
+        phenotype - a string representing the guess
+        
+    """
+    alpha = {
+    1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 
+    9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 
+    16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 
+    23: 'w', 24: 'x', 25: 'y', 26: 'z'}
+    for i in range(len(individual)):
+        individual[i] = alpha[individual[i]]
+    return ''.join(individual) 
 
 def letter_type(guessed_word):
     """
@@ -279,9 +338,20 @@ def main():
     """executes a full EA"""
     global ANSWER
     ANSWER = answer.initialize_answer() # returns a list of chars for our problem
-    ANSWER = ['c', 'h', 'u', 'd']
-    print(ANSWER)
-    print(mutate(['c','h','a','s','i','s','d']))
+    
+    # initialize population
+    population = initialize_population()
+
+    word_found = False
+    #while the stopping criteria has not been met
+    while word_found == False:
+        #evaluate fitness/parent selection
+
+        #recombine/mutate
+
+        #survivor selection        
+        pass
+
     
 
 main()
