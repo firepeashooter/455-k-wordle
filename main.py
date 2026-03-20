@@ -110,7 +110,27 @@ def n_point_crossover(parent1, parent2, n):
 
 
 
-def mutate(individual, mutation_rate=0.2):
+def letter_type(guessed_word, idx, real_answer):
+
+    if idx < len(real_answer):
+        if guessed_word[idx] == real_answer[idx]:
+            return 'green'
+        elif guessed_word[idx] in real_answer:
+            return 'yellow'
+        else:
+            return 'gray'
+    else:
+        raise ValueError("Index out of Bounds")
+
+
+
+print(letter_type(['c', 'h', 'e', 'a', 'x'], 7, ['c', 'h', 'e', 'a', 't']))
+
+
+
+
+
+def mutate(individual, real_answer, mutation_rate=0.2):
     """
     Performs mutation on an individual by mutating each gene with a mutation_rate% chance. 
     If the letter is a Green Letter we don't mutate, if Yelllow we swap mutate, if the letter
@@ -125,7 +145,6 @@ def mutate(individual, mutation_rate=0.2):
         individual (list): the new mutated individual
     """
 
-    real_answer = ['c', 'h', 'e', 'a', 't']
 
     #Determines what kind of letter it is
     for c_index in range(len(individual)):
@@ -134,26 +153,35 @@ def mutate(individual, mutation_rate=0.2):
             #Mutation_rate % of the time we mutate an individual gene
             if random.random() < mutation_rate:
 
+                letter_color = letter_type(individual, c_index, real_answer)
+
+                print(letter_color)
+
                 #Skip Green Letters
-                if individual[c_index] == real_answer[c_index]:
+                if letter_color == 'green':
                     print("Green Letter, Nothing")
                     continue
 
                 #Swap mutation the yellows
-                elif individual[c_index] in real_answer: # BE ADVISED - YELLOWS MAY BE TAGGED INCORRECTLY DUE TO DUPLICATES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    print("Yellow Letter, Swap Mutation")
-                        # Assume 'arr' is your genome and 'i' is your current_index
+                #TODO: Make this actually not swap with green letters
+                elif letter_color == 'yellow': 
+
+                    print("Yellow Letter, Swap Mutation, but not with other greens")
+
                     random_idx = random.randrange(len(individual))
 
                     # Swap this element with a random one in the arr
                     individual[c_index], individual[random_idx] = individual[random_idx], individual[c_index]
                 
+
                 #Do random resetting
                 else:
                     print("Gray Letter, Random Reset Mutation")
                     new_letter = np.random.randint(1,26)
 
                     individual[c_index] = new_letter
+
+
     print(individual)
     return individual
 
