@@ -207,6 +207,7 @@ def letter_type(guessed_word):
     green_list = []
     yellow_list = []
     grey_list = []
+    tmp_grey = []
     global ANSWER
     ans_copy = copy.deepcopy(ANSWER)
     idx = 0
@@ -217,15 +218,20 @@ def letter_type(guessed_word):
         elif guessed_word[idx] in ans_copy:
             yellow_list.append(idx)
         else:
+            # If the char is gray, add to a list that can be checked for longer guess yellows
+            tmp_grey.append(idx)
             grey_list.append(idx)
         
         # remove the first character from the copy
         ans_copy.pop(0)
         idx += 1
     
-    # TODO add the remaining indices into the gray/yellow list?
+    # add the remaining indices into the gray/yellow list?
     for i in range(idx, len(guessed_word)):
-        continue
+        if guessed_word[i] in tmp_grey:
+            yellow_list.append(i)
+        else:
+            grey_list.append(i)
     
     return [green_list,yellow_list,grey_list]
 
@@ -273,9 +279,9 @@ def main():
     """executes a full EA"""
     global ANSWER
     ANSWER = answer.initialize_answer() # returns a list of chars for our problem
-    ANSWER = ['c', 'h', 'u', 'd','s','u','n']
+    ANSWER = ['c', 'h', 'u', 'd']
     print(ANSWER)
-    print(mutate(['c','h','a','s','i','s','o']))
+    print(mutate(['c','h','a','s','i','s','d']))
     
 
 main()
