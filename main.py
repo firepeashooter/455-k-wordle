@@ -4,50 +4,51 @@ import copy
 import random
 
 
+# TODO
+# running tests (post-brian edits)
+# mutation doesnt work with guesses bigger than answer? Maybe itws letter type
+# change mutation after yellow problem
+
 # --- CONSTANTS ---
 ANSWER = []
 
 # --- FUNCTIONS ---
-def evaluate_fitness(guess=[], real_answer=[]):
+def evaluate_fitness(guess=[]):
     """
     Takes in a word from the population, returns a normalized fitness number for the word.
+    
+    Args:
+        guess - a list of characters from the solution
 
-    guess - a list of characters from the solution
-
-    fitness - returns a float scoring how strong the guess is
+    Returns:
+        fitness - returns a float scoring how strong the guess is
     """
     # initialize fitness
     fitness = 0
+    global ANSWER
 
     # for each char in the guess
-    for c_index, char in enumerate(guess):
-        if c_index < len(real_answer): # ensures index never hits out of bounds
-            # if the location lines up 1:1 with the answer, add 1 to fitness
-            if char == real_answer[c_index]:
-                fitness += 1
-            # else if the char is in the word but wrong spot, add 0.5 to fitness
-            elif char in real_answer: # BE ADVISED - YELLOWS MAY BE TAGGED INCORRECTLY DUE TO DUPLICATES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                fitness += 0.5
-            # else add 0 to fitnes
-        else:
-            if char in real_answer:
-                fitness += 0.5
+    green, yellow, _ = letter_type(guess)
+
+    # calculate the fitness of each letter
+    fitness = len(green) + len(yellow)*0.5
 
     # normalize fitness result and return
     fitness = fitness/len(guess)
 
     return fitness
 
-def tourney_selection(k=5, pop=[], answer=[]):
+def tourney_selection(k=5, pop=[]):
     """
     pick individuals as parents for the next generation. 
     For tournament, pick a small random subset (tournament) and the best one wins the right to reproduce
 
-    k - size of each tournament
-    pop - the full population we are selecting from
-    answer - verifies fitness
+    Args:
+        k - size of each tournament
+        pop - the full population we are selecting from
 
-    parent_list - a list of solutions that have clearence to be parents.
+    Returns:
+        parent_list - a list of solutions that have clearence to be parents.
     """
     # initialize list of solutions with clearence to be parents
     parent_list = []
@@ -67,7 +68,7 @@ def tourney_selection(k=5, pop=[], answer=[]):
         best_fit = -1
 
         for p in t_participants:
-            new_fit = evaluate_fitness(p, answer)
+            new_fit = evaluate_fitness(p)
 
             if new_fit > best_fit: # replace best recorded fitness
                 best_sol = p
@@ -192,38 +193,45 @@ def n_point_crossover(parent1, parent2, n):
     return [offspring1, offspring2]
 
 
-#TEMPORARY?????
-def letter_type(guessed_word, idx, real_answer):
+
+def letter_type(guessed_word):
     """
     Returns the color of the letter at the given index in the guessed word compared to the real answer.
 
     Args:
         guessed_word (list): A single individual representing a word
-        idx (int): The index of the letter to check
-        real_answer (list): The correct answer to compare against
 
     Returns:
         str: The color of the letter at the given index
     """
+    green_list = []
+    yellow_list = []
+    grey_list = []
+    global ANSWER
+    ans_copy = copy.deepcopy(ANSWER)
+    idx = 0
 
-    if idx < len(real_answer):
-        if guessed_word[idx] == real_answer[idx]:
-            return 'green'
-        elif guessed_word[idx] in real_answer:
-            return 'yellow'
+    while len(ans_copy) > 0:
+        if guessed_word[idx] == ans_copy[0]:
+            green_list.append(idx)
+        elif guessed_word[idx] in ans_copy:
+            yellow_list.append(idx)
         else:
-            return 'gray'
-    else:
-        raise ValueError("Index out of Bounds")
+            grey_list.append(idx)
+        
+        # remove the first character from the copy
+        ans_copy.pop(0)
+        idx += 1
+    
+    # TODO add the remaining indices into the gray/yellow list?
+    for i in range(idx, len(guessed_word)):
+        continue
+    
+    return [green_list,yellow_list,grey_list]
 
 
 
-
-
-
-
-
-def mutate(individual, real_answer, mutation_rate=0.2):
+def mutate(individual, mutation_rate=0.2):
     """
     Performs mutation on an individual by mutating each gene with a mutation_rate% chance. 
     If the letter is a Green Letter we don't mutate, if Yelllow we swap mutate, if the letter
@@ -231,49 +239,31 @@ def mutate(individual, real_answer, mutation_rate=0.2):
 
     Args:
         individual (list): A single individual representing a word
-        real_answer (list): The correct answer to compare against
         mutation_rate (float): A float between 0 and 1 determning chance of a gene being
         mutated
 
     Returns:
         individual (list): the new mutated individual
     """
-
+    global ANSWER
 
     #Determines what kind of letter it is
     for c_index in range(len(individual)):
-        if c_index <= len(real_answer): # ensures index never hits out of bounds
+        if c_index <= len(ANSWER): # ensures index never hits out of bounds
 
             #Mutation_rate % of the time we mutate an individual gene
             if random.random() < mutation_rate:
 
-                letter_color = letter_type(individual, c_index, real_answer)
+                _, yellow_list, grey_list = letter_type(individual)
 
-                print(letter_color)
-
-                #Skip Green Letters
-                if letter_color == 'green':
-                    print("Green Letter, Nothing")
-                    continue
-
-                #Swap mutation the yellows
-                #TODO: Make this actually not swap with green letters
-                elif letter_color == 'yellow': 
-
-                    print("Yellow Letter, Swap Mutation, but not with other greens")
-
-                    random_idx = random.randrange(len(individual))
-
-                    # Swap this element with a random one in the arr
-                    individual[c_index], individual[random_idx] = individual[random_idx], individual[c_index]
+                swap_list = yellow_list + grey_list
+                print(swap_list) # get list of yellows and greys
                 
+                swap = random.sample(swap_list,2)
 
-                #Do random resetting
-                else:
-                    print("Gray Letter, Random Reset Mutation")
-                    new_letter = np.random.randint(1,26)
-
-                    individual[c_index] = new_letter
+                #swaps the two elements
+                individual[swap[0]], individual[swap[1]] = individual[swap[1]], individual[swap[0]] 
+                
 
     return individual
 
@@ -281,7 +271,11 @@ def mutate(individual, real_answer, mutation_rate=0.2):
 
 def main():
     """executes a full EA"""
+    global ANSWER
     ANSWER = answer.initialize_answer() # returns a list of chars for our problem
+    ANSWER = ['c', 'h', 'u', 'd','s','u','n']
+    print(ANSWER)
+    print(mutate(['c','h','a','s','i','s','o']))
     
 
 main()
