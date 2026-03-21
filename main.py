@@ -1,16 +1,11 @@
 import numpy as np
 import answer # generates an answer
-import copy
 import random
+import string
+import copy
 import nltk
 nltk.download('words')
 from nltk.corpus import words
-
-
-# TODO
-# running tests (post-brian edits)
-# mutation doesnt work with guesses bigger than answer? Maybe itws letter type
-# change mutation after yellow problem
 
 # --- CONSTANTS ---
 ANSWER = []
@@ -244,14 +239,14 @@ def to_phenotype(individual):
         phenotype - a string representing the guess
         
     """
-    alpha = {
-    1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 
-    9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 
-    16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 
-    23: 'w', 24: 'x', 25: 'y', 26: 'z'}
-    for i in range(len(individual)):
-        individual[i] = alpha[individual[i]]
-    return ''.join(individual) 
+    #alpha = {
+    #0: 'a', 1: 'b', 2: 'c', 3: 'd', 4: 'e', 5: 'f', 6: 'g', 7: 'h', 
+    #8: 'i', 9: 'j', 10: 'k', 11: 'l', 12: 'm', 13: 'n', 14: 'o', 
+    #15: 'p', 16: 'q', 17: 'r', 18: 's', 19: 't', 20: 'u', 21: 'v', 
+    #22: 'w', 23: 'x', 24: 'y', 25: 'z'}
+    #for i in range(len(individual)):
+        #individual[i] = alpha[i]
+    return "".join(individual)
 
 def letter_type(guessed_word):
     """
@@ -261,38 +256,42 @@ def letter_type(guessed_word):
         guessed_word (list): A single individual representing a word
 
     Returns:
-        str: The color of the letter at the given index
+        green_list: A list of indices in a guess where greens are located
+        yellow_list: A list of indices where there are yellow letters
+        grey_list: A list where all grey letters are located
     """
+
+    global ANSWER
     green_list = []
     yellow_list = []
     grey_list = []
-    tmp_grey = []
-    global ANSWER
-    ans_copy = copy.deepcopy(ANSWER)
-    idx = 0
-
-    while len(ans_copy) > 0:
-        if guessed_word[idx] == ans_copy[0]:
-            green_list.append(idx)
-        elif guessed_word[idx] in ans_copy:
-            yellow_list.append(idx)
-        else:
-            # If the char is gray, add to a list that can be checked for longer guess yellows
-            tmp_grey.append(idx)
-            grey_list.append(idx)
-        
-        # remove the first character from the copy
-        ans_copy.pop(0)
-        idx += 1
     
-    # add the remaining indices into the gray/yellow list?
-    for i in range(idx, len(guessed_word)):
-        if guessed_word[i] in tmp_grey:
+    # to handle duplicate letters correctly.
+    remaining_ans = list(ANSWER)
+    
+    # round 1: Find all Greens (Exact Matches)
+    # do this first so a Green letter doesn't get 'stolen' by a Yellow check
+    for i in range(min(len(guessed_word), len(ANSWER))):
+        if guessed_word[i] == ANSWER[i]:
+            green_list.append(i)
+            # Mark this character as 'used' so it can't be a yellow for another letter
+            # We use None to keep the indices aligned
+            remaining_ans[i] = None 
+
+    # round 2: Find Yellows and Greys
+    for i in range(len(guessed_word)):
+        if i in green_list:
+            continue
+            
+        char = guessed_word[i]
+        if char in remaining_ans:
             yellow_list.append(i)
+            # Remove ONLY one instance of that character from the pool
+            remaining_ans.remove(char)
         else:
             grey_list.append(i)
-    
-    return [green_list,yellow_list,grey_list]
+            
+    return green_list, yellow_list, grey_list
 
 
 
@@ -312,23 +311,32 @@ def mutate(individual, mutation_rate=0.2):
     """
     global ANSWER
 
-    #Determines what kind of letter it is
+    # We use indices to avoid the "duplicate letter" confusion
+    green_indices, yellow_indices, grey_indices = letter_type(individual)
+
+    # iterate and apply mutations
     for c_index in range(len(individual)):
-        if c_index <= len(ANSWER): # ensures index never hits out of bounds
+        if random.random() < mutation_rate:
+            
+            # Skip greens
+            if c_index in green_indices:
+                continue
 
-            #Mutation_rate % of the time we mutate an individual gene
-            if random.random() < mutation_rate:
+            # random reset on grey
+            elif c_index in grey_indices:
+                individual[c_index] = random.choice(string.ascii_lowercase)
 
-                _, yellow_list, grey_list = letter_type(individual)
-
-                swap_list = yellow_list + grey_list
-                print(swap_list) # get list of yellows and greys
+            # bit swap yellows with non-greens
+            elif c_index in yellow_indices:
+                # swap with any other Yellow or Gray index
+                possible_swap_targets = yellow_indices + grey_indices
+                # Remove current index so we don't "swap" with ourselves
+                if c_index in possible_swap_targets:
+                    possible_swap_targets.remove(c_index)
                 
-                swap = random.sample(swap_list,2)
-
-                #swaps the two elements
-                individual[swap[0]], individual[swap[1]] = individual[swap[1]], individual[swap[0]] 
-                
+                if possible_swap_targets:
+                    swap_with = random.choice(possible_swap_targets)
+                    individual[c_index], individual[swap_with] = individual[swap_with], individual[c_index]
 
     return individual
 
@@ -338,19 +346,60 @@ def main():
     """executes a full EA"""
     global ANSWER
     ANSWER = answer.initialize_answer() # returns a list of chars for our problem
-    
+    #hyperparameters
+    POP_SIZE = 25
+    MAX_GEN = 100
+    MUTATION_RATE = 0.1
+    TOURNEY_SIZE = 4
+    ELITISM_FACTOR = 3
+
     # initialize population
-    population = initialize_population()
+    population = initialize_population(pop_size=POP_SIZE)
 
-    word_found = False
+    
     #while the stopping criteria has not been met
-    while word_found == False:
+    for gen in range(MAX_GEN):
         #evaluate fitness/parent selection
+        population.sort(key=lambda ind: evaluate_fitness(ind), reverse=True)
 
-        #recombine/mutate
+        best_individual = population[0]
+        best_score = evaluate_fitness(best_individual)
 
-        #survivor selection        
-        pass
+        print("Winning individual in generation " + str(gen) + ": " + to_phenotype(best_individual) + " with a score of " + str(best_score))
+
+        #if we have reached the answer then break the loop
+        if best_individual == ANSWER:
+            print("---- ANSWER FOUND! ----")
+            print(to_phenotype(ANSWER) + " was reached in " + str(gen) + " generations")
+            break
+
+
+        # parent selection
+        parents = tourney_selection(k=TOURNEY_SIZE, pop=population)\
+        
+        offspring = [] #initialize the next gen
+
+        while len(offspring) < POP_SIZE: #fill it up until all offspring are created
+            parent1,parent2 = random.sample(parents,2)
+            
+            #try one or the other
+            offspring1, offspring2 = uniform_crossover(parent1, parent2) #uniform crossover
+            #offspring1, offspring2 = n_point_crossover(parent1, parent2, n=3)
+
+            offspring.append(offspring1)
+            offspring.append(offspring2)
+
+        # we have all of the parents/children, now we survivor select
+        new_population = generational_selection(population,offspring,ELITISM_FACTOR)
+
+        # then we mutate (chance incorporated)
+        for p in new_population:
+            p = mutate(p, MUTATION_RATE)
+        # iterate generations
+        population = new_population
+
+    
+
 
     
 
