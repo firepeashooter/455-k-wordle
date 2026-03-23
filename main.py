@@ -345,13 +345,21 @@ def mutate(individual, mutation_rate=0.2):
 def main():
     """executes a full EA"""
     global ANSWER
+    #random word
     ANSWER = answer.initialize_answer() # returns a list of chars for our problem
+    
+    
     #hyperparameters
     POP_SIZE = 25
     MAX_GEN = 100
     MUTATION_RATE = 0.1
     TOURNEY_SIZE = 4
     ELITISM_FACTOR = 3
+    TEST_WORD_LIST = [['r','a','t','e'],['m','u','t','a','t','e','s'],['p','o','p','u','l','a','t','i','o','n']]
+    N_POINT_FACTOR = 3
+
+    #UNCOMMENT IF TESTING (change index for word)
+    #ANSWER = TEST_WORD_LIST[0]
 
     # initialize population
     population = initialize_population(pop_size=POP_SIZE)
@@ -384,7 +392,7 @@ def main():
             
             #try one or the other
             offspring1, offspring2 = uniform_crossover(parent1, parent2) #uniform crossover
-            #offspring1, offspring2 = n_point_crossover(parent1, parent2, n=3)
+            #offspring1, offspring2 = n_point_crossover(parent1, parent2, n=N_POINT_FACTOR)
 
             offspring.append(offspring1)
             offspring.append(offspring2)
